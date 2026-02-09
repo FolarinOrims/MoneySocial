@@ -1,16 +1,6 @@
 import { OwnerBadge } from "./OwnerBadge";
 import { cn } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
-
-export interface Transaction {
-  id: string;
-  description: string;
-  amount: number;
-  category: string;
-  icon: LucideIcon;
-  owner: "me" | "partner" | "shared";
-  date: string;
-}
+import { Transaction } from "@/types/transaction";
 
 interface TransactionItemProps {
   transaction: Transaction;

@@ -32,7 +32,21 @@ cd <YOUR_PROJECT_NAME>
 # Step 3: Install the necessary dependencies.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Step 4: Install backend dependencies (if not already installed)
+npm install
+
+# Step 5: Seed the database with initial transaction data (optional)
+npm run seed
+
+# Step 6: Start the development servers
+# Option A: Run both frontend and backend together
+npm run dev:all
+
+# Option B: Run them separately (in two terminal windows)
+# Terminal 1: Backend server
+npm run dev:backend
+
+# Terminal 2: Frontend server
 npm run dev
 ```
 
@@ -59,6 +73,8 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Express.js (Backend API)
+- React Query (Data fetching)
 
 ## How can I deploy this project?
 

@@ -1,38 +1,13 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/PageHeader";
-import { TransactionItem, Transaction } from "@/components/TransactionItem";
-import {
-  ShoppingCart,
-  Coffee,
-  Car,
-  Home,
-  Utensils,
-  Film,
-  Zap,
-  Briefcase,
-  CreditCard,
-  Search,
-} from "lucide-react";
+import { TransactionItem } from "@/components/TransactionItem";
+import { Transaction, TransactionAPI } from "@/types/transaction";
+import { getIconByName } from "@/lib/iconMapping";
+import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type FilterType = "all" | "me" | "partner" | "shared";
-
-const allTransactions: Transaction[] = [
-  { id: "1", description: "Whole Foods", amount: -127.45, category: "Groceries", icon: ShoppingCart, owner: "partner", date: "Dec 28" },
-  { id: "2", description: "Starbucks", amount: -8.50, category: "Dining", icon: Coffee, owner: "me", date: "Dec 28" },
-  { id: "3", description: "Gas Station", amount: -52.00, category: "Transport", icon: Car, owner: "shared", date: "Dec 27" },
-  { id: "4", description: "Rent Payment", amount: -1800.00, category: "Housing", icon: Home, owner: "shared", date: "Dec 27" },
-  { id: "5", description: "Chipotle", amount: -15.75, category: "Dining", icon: Utensils, owner: "me", date: "Dec 26" },
-  { id: "6", description: "Netflix", amount: -15.99, category: "Entertainment", icon: Film, owner: "shared", date: "Dec 26" },
-  { id: "7", description: "Electric Bill", amount: -142.50, category: "Utilities", icon: Zap, owner: "shared", date: "Dec 25" },
-  { id: "8", description: "Salary Deposit", amount: 3500.00, category: "Income", icon: Briefcase, owner: "me", date: "Dec 24" },
-  { id: "9", description: "Target", amount: -89.32, category: "Shopping", icon: ShoppingCart, owner: "partner", date: "Dec 24" },
-  { id: "10", description: "Partner Salary", amount: 3200.00, category: "Income", icon: Briefcase, owner: "partner", date: "Dec 24" },
-  { id: "11", description: "Credit Card Payment", amount: -500.00, category: "Transfer", icon: CreditCard, owner: "me", date: "Dec 23" },
-  { id: "12", description: "Uber", amount: -24.50, category: "Transport", icon: Car, owner: "partner", date: "Dec 23" },
-  { id: "13", description: "Dinner Date", amount: -85.00, category: "Dining", icon: Utensils, owner: "shared", date: "Dec 22" },
-  { id: "14", description: "Gym Membership", amount: -49.99, category: "Health", icon: Briefcase, owner: "me", date: "Dec 22" },
-];
 
 const filters: { label: string; value: FilterType }[] = [
   { label: "All", value: "all" },
@@ -41,11 +16,31 @@ const filters: { label: string; value: FilterType }[] = [
   { label: "Shared", value: "shared" },
 ];
 
+// Fetch transactions from API
+async function fetchTransactions(): Promise<Transaction[]> {
+  const response = await fetch("/api/transactions");
+  if (!response.ok) {
+    throw new Error("Failed to fetch transactions");
+  }
+  const apiTransactions: TransactionAPI[] = await response.json();
+  
+  // Transform API transactions to frontend transactions
+  return apiTransactions.map((tx) => ({
+    ...tx,
+    icon: getIconByName(tx.icon),
+  }));
+}
+
 export default function Transactions() {
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredTransactions = allTransactions.filter((tx) => {
+  const { data: transactions = [], isLoading, error } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: fetchTransactions,
+  });
+
+  const filteredTransactions = transactions.filter((tx) => {
     const matchesFilter = activeFilter === "all" || tx.owner === activeFilter;
     const matchesSearch = tx.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tx.category.toLowerCase().includes(searchQuery.toLowerCase());
@@ -112,18 +107,32 @@ export default function Transactions() {
 
         {/* Transaction List */}
         <section>
-          <p className="text-xs text-muted-foreground mb-3">
-            {filteredTransactions.length} transactions
-          </p>
-          <div className="space-y-2">
-            {filteredTransactions.map((tx, index) => (
-              <TransactionItem
-                key={tx.id}
-                transaction={tx}
-                style={{ animationDelay: `${index * 30}ms` }}
-              />
-            ))}
-          </div>
+          {isLoading && (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              Loading transactions...
+            </p>
+          )}
+          {error && (
+            <p className="text-sm text-destructive text-center py-8">
+              Error loading transactions. Please make sure the backend server is running.
+            </p>
+          )}
+          {!isLoading && !error && (
+            <>
+              <p className="text-xs text-muted-foreground mb-3">
+                {filteredTransactions.length} transactions
+              </p>
+              <div className="space-y-2">
+                {filteredTransactions.map((tx, index) => (
+                  <TransactionItem
+                    key={tx.id}
+                    transaction={tx}
+                    style={{ animationDelay: `${index * 30}ms` }}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </section>
       </div>
     </div>
