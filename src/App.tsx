@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { TrendingUp, Users, Wallet, LineChart, Send, Settings, X, Share2, Zap, Plus, Eye, EyeOff, MessageCircle, User, Edit2, Check, Bell } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { FriendsPage } from '@/components/FriendsPage';
+import { AuthPage } from '@/components/AuthPage';
+import { MyProfilePage } from '@/components/MyProfilePage';
+import { useAuth } from '@/contexts/AuthContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 
-type TabId = 'home' | 'financial-score' | 'friends' | 'budget' | 'future' | 'social';
+type TabId = 'home' | 'financial-score' | 'friends' | 'budget' | 'future' | 'social' | 'my-profile';
 
 // Score levels configuration
 const SCORE_LEVELS = [
@@ -26,11 +29,28 @@ function getLevelProgress(score: number) {
 }
 
 export default function App() {
+  const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [userScore, setUserScore] = useState(64);
   const [showSettings, setShowSettings] = useState(false);
   const [profileVisible, setProfileVisible] = useState(true);
   const [openOptoConversation, setOpenOptoConversation] = useState<string | null>(null);
+
+  // Show loading spinner while checking auth
+  if (loading) {
+    return (
+      <div className="size-full flex items-center justify-center bg-[#e8ebf1]">
+        <div className="w-14 h-14 rounded-full bg-gradient-to-r from-[#5c87d6] to-[#4a6bb8] flex items-center justify-center animate-pulse">
+          <span className="text-white text-xl font-bold">O</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show auth page if not logged in
+  if (!user) {
+    return <AuthPage />;
+  }
 
   return (
     <div className="size-full flex bg-[#e8ebf1]">
@@ -44,8 +64,8 @@ export default function App() {
           <span className="text-white text-xl font-bold">O</span>
         </button>
 
-        {/* Navigation Tabs */}
-        <nav className="px-4 pt-2 space-y-2.5 pb-3 border-b border-[#d8e2ec]">
+        {/* Navigation Tabs – scrollable middle */}
+        <nav className="flex-1 overflow-auto px-4 pt-2 space-y-2.5 pb-3">
             <button
               onClick={() => setActiveTab('financial-score')}
             className={`w-full flex flex-col items-center gap-1.5 px-3 py-2.5 rounded-xl transition-all ${
@@ -115,10 +135,28 @@ export default function App() {
             </div>
             <span className="text-xs">Social</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('my-profile')}
+            className={`w-full flex flex-col items-center gap-1.5 px-3 py-2.5 rounded-xl transition-all ${
+              activeTab === 'my-profile'
+                ? 'bg-white shadow-md text-[#5c87d6]'
+                : 'bg-white/50 text-[#6b7e9e] hover:bg-white hover:shadow-md'
+            }`}
+          >
+            <div className="w-9 h-9 rounded-full bg-[#e8f0fe] flex items-center justify-center overflow-hidden">
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-4.5 h-4.5" />
+              )}
+            </div>
+            <span className="text-xs">My Profile</span>
+          </button>
         </nav>
 
-        {/* Ask Opto Section */}
-        <div className="px-4 pt-3 pb-1.5">
+        {/* Pinned bottom actions – always visible */}
+        <div className="flex-shrink-0 border-t border-[#d8e2ec] px-4 pt-3 pb-4 space-y-1.5">
           <button 
             onClick={() => {
               setActiveTab('friends');
@@ -131,10 +169,7 @@ export default function App() {
             </div>
             <span className="text-sm font-medium">Ask Opto</span>
           </button>
-        </div>
 
-        {/* Add Friend to Platform Section */}
-        <div className="px-4 pb-1.5">
           <button 
             className="w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white/70 text-[#2c3e50] hover:bg-white hover:shadow-md transition-all border border-[#d8e2ec]"
           >
@@ -143,10 +178,7 @@ export default function App() {
             </div>
             <span className="text-sm font-medium">Invite Friend</span>
           </button>
-        </div>
 
-        {/* Settings Section */}
-        <div className="px-4 pb-4">
           <button 
             onClick={() => setShowSettings(true)}
             className="w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white/70 text-[#2c3e50] hover:bg-white hover:shadow-md transition-all border border-[#d8e2ec]"
@@ -234,6 +266,7 @@ export default function App() {
         {activeTab === 'budget' && <BudgetPage />}
         {activeTab === 'future' && <FuturePage />}
         {activeTab === 'social' && <SocialPage />}
+        {activeTab === 'my-profile' && <MyProfilePage />}
       </div>
     </div>
   );

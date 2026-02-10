@@ -12,8 +12,9 @@ dist
 dist-ssr
 *.local
 
-# Backend data
+# Backend data & uploads
 server/data/
+server/uploads/
 
 # Environment variables
 .env
